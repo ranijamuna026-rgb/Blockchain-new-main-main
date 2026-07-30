@@ -1,7 +1,11 @@
+
+const fs = require("fs");
+const path = require("path");
 const { SHA256 } = require("crypto-js");
 
 const DIFFICULTY = 4;
 const EMPTY_PREVIOUS_HASH = "0";
+const CHAIN_FILE = path.join(__dirname, "chain.json");
 
 /**
  * Keeps the application's mined blocks in memory. Persistence can be added
