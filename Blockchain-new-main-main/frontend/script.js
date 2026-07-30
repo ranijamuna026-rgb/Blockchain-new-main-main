@@ -261,8 +261,8 @@ async function connectWallet() {
 }
 
 async function sendToken() {
-    const receiver = document.getElementById("receiver").value;
-    const amount = document.getElementById("amount").value;
+    const receiver = document.getElementById("receiver").value.trim();
+    const amount = document.getElementById("amount").value.trim();
 
     if (!receiver || !amount) {
         alert("Enter receiver and amount");
@@ -274,35 +274,64 @@ async function sendToken() {
         return;
     }
 
-    if (!ethers.utils.isAddress(receiver) || Number(amount) <= 0) {
-        alert("Enter a valid receiver address and positive amount");
+    if (!ethers.utils.isAddress(receiver)) {
+        alert("Invalid receiver address");
+        return;
+    }
+
+    if (Number(amount) <= 0) {
+        alert("Amount must be greater than 0");
         return;
     }
 
     try {
-        console.log("Sending transaction...");
         const sender = await signer.getAddress();
+
+        // 🔥 MetaMask popup
+        const tx = await contract.transfer(
+            receiver,
+            ethers.utils.parseUnits(amount, 18)
+        );
+
+        alert("Please confirm the transaction in MetaMask...");
+
+        // Wait until transaction is mined
+        await tx.wait();
+
+        // Add transaction to backend pool
         const response = await fetch(`${transactionPoolApi}/transaction`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ sender, receiver, amount })
+            body: JSON.stringify({
+                sender,
+                receiver,
+                amount: Number(amount),
+                txHash: tx.hash
+            })
         });
 
         const result = await response.json();
 
         if (!response.ok) {
-            throw new Error(result.error || "Unable to add transaction");
+            throw new Error(result.error || "Failed to add transaction to pool");
         }
 
-        alert("Transaction added to Transaction Pool");
+        alert(`Transaction Successful!\n\nTx Hash:\n${tx.hash}`);
+
+        // Clear inputs
         document.getElementById("receiver").value = "";
         document.getElementById("amount").value = "";
+
+        // Refresh UI
+        await updateBalance(sender);
+        await updateBalance(receiver);
         await loadPendingTransactions();
-    } catch (error) {
-        console.error(error);
-        alert(`Transaction Pool Error: ${error.message}`);
+
+    } catch (err) {
+        console.error("Transaction Error:", err);
+        alert(err.reason || err.message || "Transaction Failed");
     }
 }
 
