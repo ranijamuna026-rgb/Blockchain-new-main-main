@@ -1,5 +1,5 @@
 (() => {
-    const apiUrl = `http://${window.location.hostname}:3001`;
+    const apiUrl = `${window.location.origin}/api`;
     const mineButton = document.getElementById("mineBtn");
     const nonceEl = document.getElementById("miningNonce");
     const hashEl = document.getElementById("miningHash");
