@@ -1,6 +1,6 @@
 // ─── Hardhat Local ────────────────────────────────────────────────────────────
 const HARDHAT_CHAIN_ID       = "0x7a69";          // 31337
-const HARDHAT_RPC_URL        = `http://${window.location.hostname}:8545`;
+const HARDHAT_RPC_URL = `${window.location.origin}/hardhat-rpc`;
 const HARDHAT_CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 // ─── Sepolia Testnet ──────────────────────────────────────────────────────────
