@@ -19,8 +19,7 @@ let contract;
 // "hardhat" | "sepolia"  — driven by the toggle buttons in the header
 let activeNetwork = "hardhat";
 
-const transactionPoolApi = `http://${window.location.hostname}:3001`;
-
+const transactionPoolApi = `${window.location.origin}/api`;
 /** Returns chain config for the currently selected network. */
 function getNetworkConfig() {
     if (activeNetwork === "sepolia") {
