@@ -20,9 +20,12 @@ jobs:
           script: |
             set -e
 
-            PROJECT_DIR="$HOME/Blockchain-new-main-main/Blockchain-new-main-main"
+            REPO_DIR="$HOME/Blockchain-new-main-main"
+            APP_DIR="$REPO_DIR/Blockchain-new-main-main"
 
-            cd "$PROJECT_DIR"
+            cd "$REPO_DIR"
+
+            echo "===== Blockchain CI/CD ====="
 
             OLD_COMMIT=$(git rev-parse HEAD)
 
@@ -37,47 +40,60 @@ jobs:
 
             CHANGED_FILES=$(git diff --name-only "$OLD_COMMIT" "$NEW_COMMIT")
 
+            echo "Changed files:"
+            echo "$CHANGED_FILES"
+
             PACKAGE_CHANGED=false
             FRONTEND_CHANGED=false
             BACKEND_CHANGED=false
             CONTRACT_CHANGED=false
 
-            if echo "$CHANGED_FILES" | grep -Eq '^(package.json|package-lock.json)$'; then
+            if echo "$CHANGED_FILES" | grep -Eq '^Blockchain-new-main-main/(package.json|package-lock.json)$'; then
               PACKAGE_CHANGED=true
             fi
 
-            if echo "$CHANGED_FILES" | grep -q '^frontend/'; then
+            if echo "$CHANGED_FILES" | grep -q '^Blockchain-new-main-main/frontend/'; then
               FRONTEND_CHANGED=true
             fi
 
-            if echo "$CHANGED_FILES" | grep -q '^backend/'; then
+            if echo "$CHANGED_FILES" | grep -q '^Blockchain-new-main-main/backend/'; then
               BACKEND_CHANGED=true
             fi
 
-            if echo "$CHANGED_FILES" | grep -Eq '^(contracts/|hardhat.config.js|scripts/|ignition/)'; then
+            if echo "$CHANGED_FILES" | grep -Eq '^Blockchain-new-main-main/(contracts/|hardhat.config.js|scripts/|ignition/)'; then
               CONTRACT_CHANGED=true
             fi
 
             git pull --ff-only origin main
 
+            cd "$APP_DIR"
+
             if [ "$PACKAGE_CHANGED" = true ]; then
+              echo "Package files changed"
               npm install
               BACKEND_CHANGED=true
             fi
 
             if [ "$CONTRACT_CHANGED" = true ]; then
+              echo "Contract files changed"
               npx hardhat compile
               BACKEND_CHANGED=true
+
               echo "Hardhat node NOT restarted"
-              echo "Contract NOT redeployed automatically"
+              echo "Contract NOT automatically redeployed"
             fi
 
             if [ "$BACKEND_CHANGED" = true ]; then
+              echo "Backend changed"
               pm2 restart blockchain-backend --update-env
               pm2 save
+            else
+              echo "Backend unchanged"
             fi
 
             if [ "$FRONTEND_CHANGED" = true ]; then
+              echo "Frontend changed - deploying..."
+
               sudo rm -rf /var/www/html/*
               sudo cp -r frontend/* /var/www/html/
 
@@ -87,7 +103,12 @@ jobs:
 
               sudo nginx -t
               sudo systemctl reload nginx
+
+              echo "Frontend deployment completed"
+            else
+              echo "Frontend unchanged"
             fi
 
-            echo "Deployment completed"
+            echo "===== Deployment completed ====="
+
             pm2 status
